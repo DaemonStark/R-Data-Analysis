@@ -1,0 +1,17 @@
+DATA DICTIONARY
+
+
+The dataset consists of 20,000 examples (lines, rows) over 12 variables (fields, columns). The dataset constitutes a two-class supervised learning problem.  The class variable, LEAVE, is the last variable on each line, and its legal values are LEAVE and STAY.  The header of churn.arff describes the legal values of each variable.  Informally, here are their meanings:
+
+COLLEGE : Is the customer college educated?
+INCOME	: Annual income
+OVERAGE	: Average overcharges per month
+LEFTOVER : Average % leftover minutes per month
+HOUSE : Value of dwelling (from census tract)
+HANDSET_PRICE : Cost of phone
+OVER_15MINS_CALLS_PER_MONTH : Average number of long (>15 mins) calls per month
+AVERAGE_CALL_DURATION : Average call duration
+REPORTED_SATISFACTION : Reported level of satisfaction
+REPORTED_USAGE_LEVEL : Self-reported usage level
+CONSIDERING_CHANGE_OF_PLAN : Was customer considering changing his/her plan?
+LEAVE : Class variable: whether customer left or stayed
