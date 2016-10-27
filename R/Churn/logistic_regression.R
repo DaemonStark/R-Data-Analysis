@@ -1,4 +1,4 @@
-cleanChurnData <- function()
+logistic_regression_cv <- function()
 {
 churn_data <- read.csv("data/churn.csv",header = T,sep = ",");
 
