@@ -2,6 +2,9 @@
 # Cross validation of 10 folds is used for this model
 logistic_regression_cv <- function()
 {
+
+  library("caret");
+
 #read data from csv file
 churn_data <- read.csv("data/churn.csv",header = T,sep = ",");
 
