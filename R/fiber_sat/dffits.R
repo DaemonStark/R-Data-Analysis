@@ -1,15 +1,15 @@
-dffit_sum <- function(y, x, nsim=1000,showall= FALSE)
+dffit_sum <- function(y, x1,x2, nsim=1000)
 {
   nn <-length(y);
-  lm<-lm(y~x);
+  lm<-lm(y~x1+x2);
   xd1<-qnorm((((nn+2):(2*nn+1))-0.375)/(2*nn+1.25))
   rs1<-sort(abs(dffits(lm)))
   lc1<-rnorm(nn,mean=0,sd=1)
-  lm1<-lm(lc1~x)
+  lm1<-lm(lc1~x1+x2)
   rssim<-sort(abs(dffits(lm1)))
   for(j in 2:nsim){
     lc1<-rnorm(nn,mean=0,sd=1)
-    lm1<-lm(lc1~x)
+    lm1<-lm(lc1~x1+x2)
     rssim<-c(rssim,sort(abs(dffits(lm1))))
   }
   rssim<-matrix(rssim,ncol=nn,byrow=T)

@@ -1,19 +1,19 @@
-dnsim <- function(y, x, nsim=1000,showall= FALSE)
+dnsim <- function(y, x1,x2, nsim=1000,showall= FALSE)
 {
   ### Common part
   nn <- length(y)
-  lm<-lm(y~x)
+  lm<-lm(y~x1+x2)
   xd1<-qnorm((((nn+2):(2*nn+1))-0.375)/(2*nn+1.25))
   if(showall==TRUE){
     ## par(mfrow=c(1,3))
     ########### Internally Standardized residual
     rs1<-sort(abs(stanres(lm)))
     lc1<-rnorm(nn,mean=0,sd=1)
-    lm1<-lm(lc1~x)
+    lm1<-lm(lc1~x1+x2)
     rssim<-sort(abs(stanres(lm1)))
     for(j in 2:nsim){
       lc1<-rnorm(nn,mean=0,sd=1)
-      lm1<-lm(lc1~x)
+      lm1<-lm(lc1~x1+x2)
       rssim<-c(rssim,sort(abs(stanres(lm1))))
     }
     rssim<-matrix(rssim,ncol=nn,byrow=T)
