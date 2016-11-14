@@ -1,4 +1,4 @@
-ext_env <- function(y, x1,x2, nsim=1000)
+ext_env <- function(y, x1,x2, nsim)
 {
  nn <-length(y);
  lm<-lm(y~x1+x2);
