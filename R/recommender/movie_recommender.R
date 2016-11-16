@@ -40,6 +40,17 @@ rating_norm <-normalize(rating_real_mat)
 image(rating_real_mat,main="Raw Ratings")
 image(rating_norm,main="Normalized Ratings")
 
+
+#analyize the ratings data
+qplot(getRatings(rating_real_mat),binwidth=1,col="green",main="Histogram of Ratings",xlab="Ratings")
+hist(getRatings(rating_real_mat),binwidth=1,col="green",breaks=15,main="Histogram of Ratings",xlab="Ratings");
+
+
+qplot(getRatings(rating_norm),binwidth=1,main="Histogram of Normalized Ratings",xlab="Ratings")
+
+qplot(rowCounts(rating_real_mat),binwidth=10,main="Movie Average Ratings",xlab="# of users",ylab = "# of movie ratings")
+qplot(colMeans(rating_real_mat),binwidth=.1,main="Mean Ratings",xlab="Ratings",ylab = "# of movies")
+
 rating_binary <- binarize(rating_real_mat,minRating=1)
 head(as(rating_binary,"matrix"),1)
 
@@ -131,4 +142,42 @@ movie_names<- movies[rec_movie_ids,];
 
 return(movie_names);
 }
+
+############################Evaluation of Recommender Algorithms#################
+#Build scheme to be used in evaulation process
+schemes<-evaluationScheme(rating_real_mat,method="split",train=.8,k=1,given=10,goodRating=4)
+
+schemes
+#Evaluation scheme with 10 items given
+#Method: ‘split’ with 1 run(s).
+#Training set proportion: 0.800
+#Good ratings: >=4.000000
+#Data set: 671 x 9066 rating matrix of class ‘realRatingMatrix’ with 100004 ratings.
+
+
+algorithms <- list(
+       "random items" = list(name="RANDOM", param=list(normalize = "Z-score")),
+       "popular items" = list(name="POPULAR", param=list(normalize = "Z-score")),
+       "user-based CF" = list(name="UBCF", param=list(normalize = "Z-score")),
+      "item-based CF" = list(name="IBCF2", param=list(normalize = "Z-score")));
+
+results <- evaluate(schemes, algorithms, n=c(1, 3, 5, 10, 15, 20))
+
+plot(results,annotate=1:3,legend="topleft")
+plot(results,"prec/rec",annotate=3)
+
+#############################SVD##########################
+#install.packages("lsa")
+#library("lsa")
+
+#rating_ibf <-rating_mat[,-1]
+#rating_ibf[is.na(rating_ibf)]=0
+
+fsvd <- funkSVD(rating_real_mat,k=2,verbose = TRUE)
+test_svd <- tcrossprod(fsvd$U,fsvd$V)
+sqrt(MSE(rating_mat,test_svd))
+#1.21024
+
+
+
 
