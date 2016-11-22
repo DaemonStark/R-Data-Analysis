@@ -1,0 +1,90 @@
+---
+title: "Employment -Model Selection"
+date: "21 November 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load Employee Data
+
+longley <- read.table(file.choose(),header = TRUE)
+
+```{r longley}
+longley <- read.table(file.choose(),header = TRUE);
+summary(longley)
+```
+
+# Build full model with all the variables and the initial model with no variable
+
+```{r}
+model_0 <- lm(y~1,data = longley);
+model_full <-lm(y~x1+x2+x3+x4+x5+x6,data = longley);
+```
+
+# Run the stepwise forward selection process to identify the best model
+```{r}
+step(model_0,scope = list(lower=model_0,upper=model_full),direction = "forward");
+```
+
+# Above model selection leads to model with X2,X3,X4 and X6
+# Remove X5 from data set and analyse
+
+```{r}
+longley <-longley[,-5]
+```
+
+# Regressing X1+X2+X3+X4+X6 on y
+
+```{r}
+model <- lm(y~x1+x2+x3+x4+x6, data = longley);
+summary(model)
+```
+
+# Checking Correlation between variables
+```{r}
+cor(longley)
+```
+
+# Above two analysis shows that X1 is insignificant. However there is evidence of collinearity based on the correlation matrix between x1 and x2/x6. Checking VIF for multicollinearity.
+
+```{r}
+library("car");
+vif(model);
+```
+
+This is confirmed by the high VIF values of X1, X2 and X6 as above.
+
+## Including Plots
+
+```{r pressure, echo=TRUE}
+par(mfrow=c(1,2))
+plot(longley$x6,model$residuals,main="Residual vs Year")
+plot(model$fitted.values,model$residuals,main="Residual vs Fitted Value")
+ 
+```
+
+Both the plots look similar and shows non-linear trend in X6(Year) and possible multi-collinearity.
+
+# Possible solution to this could be transforming X6 and apply ridge regression to enforce penalty on variables.
+
+```{r}
+library("MASS");
+model_ridge<- lm.ridge(y~x1+x2+x3+x4+x6,data= longley, lambda = seq(0,0.1,0.001));
+plot(model_ridge);
+```
+
+```{r}
+select(model_ridge)
+```
+
+# We can check the fit of model by using qqplots stud resid vs quantiles
+```{r}
+par(mfrow=c(1,1))
+qqPlot(model)
+
+```
+
+This shows that there are outliers, going out of confidence interval and plot does not show exact linear behaviour. Further model diagnostics can be applied to check outliers in data set, removing influential obs and add/remove variables to get better fit

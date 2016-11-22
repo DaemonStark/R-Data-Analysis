@@ -56,7 +56,9 @@ head(as(rating_binary,"matrix"),1)
 
 #create a recommender model using User based Collaborative Filtering method
 #normalize the scores/ratings and use cosine similarity to group similar movies together
-recommender <- Recommender(rating_real_mat[1:nrow(rating_real_mat)],method="UBCF",param=list(normalize="Z-score",method="Cosine",nn=5,minRating=1))
+recommender <- Recommender(rating_real_mat[1:nrow(rating_real_mat)],method="UBCF",
+                           param=list(normalize="Z-score",method="Cosine"
+                                      ,nn=5,minRating=1))
 
 print(recommender)
 #Recommender of type ‘UBCF’ for ‘realRatingMatrix’
@@ -143,6 +145,9 @@ movie_names<- movies[rec_movie_ids,];
 return(movie_names);
 }
 
+#Function Call
+recommend_movies(recommend_top_list,movies,2)
+
 ############################Evaluation of Recommender Algorithms#################
 #Build scheme to be used in evaulation process
 schemes<-evaluationScheme(rating_real_mat,method="split",train=.8,k=1,given=10,goodRating=4)
@@ -159,7 +164,8 @@ algorithms <- list(
        "random items" = list(name="RANDOM", param=list(normalize = "Z-score")),
        "popular items" = list(name="POPULAR", param=list(normalize = "Z-score")),
        "user-based CF" = list(name="UBCF", param=list(normalize = "Z-score")),
-      "item-based CF" = list(name="IBCF2", param=list(normalize = "Z-score")));
+      "item-based CF" = list(name="IBCF2", param=list(normalize = "Z-score")),
+      "SVD approximation"=list(name="SVD",param=list(k=50)));
 
 results <- evaluate(schemes, algorithms, n=c(1, 3, 5, 10, 15, 20))
 
