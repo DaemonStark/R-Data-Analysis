@@ -1,7 +1,7 @@
 ---
 title: "Employment -Model Selection"
+output: pdf_document
 date: "21 November 2016"
-output: html_document
 ---
 
 ```{r setup, include=FALSE}
@@ -29,7 +29,8 @@ model_full <-lm(y~x1+x2+x3+x4+x5+x6,data = longley);
 step(model_0,scope = list(lower=model_0,upper=model_full),direction = "forward");
 ```
 
-# Above model selection leads to model with X2,X3,X4 and X6
+This Analysis shows that with Forward selection process. Model with X2, X3, X4, X6 is the best model with minimum AIC value as shown above. This is the same as we see in the table provided in the book where this model has min RSS of 841173.0036. Hence, the best model would be with constant plus X2, X3, X4 and X6.
+
 # Remove X5 from data set and analyse
 
 ```{r}
@@ -48,7 +49,9 @@ summary(model)
 cor(longley)
 ```
 
-# Above two analysis shows that X1 is insignificant. However there is evidence of collinearity based on the correlation matrix between x1 and x2/x6. Checking VIF for multicollinearity.
+According to this data we can say that variable X1 is not significant. Rest of the variables look significant here. However, when the correlation is calculated between the variables, it seems that x1 is highly correlated to x2 and x6. This shows that there could be high collinearity in the data.
+
+# Checking VIF for multicollinearity.
 
 ```{r}
 library("car");
@@ -87,4 +90,4 @@ qqPlot(model)
 
 ```
 
-This shows that there are outliers, going out of confidence interval and plot does not show exact linear behaviour. Further model diagnostics can be applied to check outliers in data set, removing influential obs and add/remove variables to get better fit
+This shows that there are outliers, going out of confidence interval and plot does not show exact linear behaviour. Further model diagnostics can be applied to check outliers in data set, removing influential obs and add/remove variables to get better fit. Analysis can be performed by checking the multicollinearity, regressing with all possible variables and understand further improvements and may be perform various model diagnostics such as overfitting, leverage and cook’s D etc. evaluation along with simulation to get more accurate results.

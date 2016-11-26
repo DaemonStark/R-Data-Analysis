@@ -1,0 +1,208 @@
+---
+title: "USA Air Quality Analysis"
+date: "25 November 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Background
+
+This Analysis is to access change in air quality using PM2.5 particulate matter from the first time it was tracked in 1999 to the 2015(2016 full data is still not available). Data was obtained from Environment Protection Agency.
+
+Daily pm2.5 (88101)
+http://aqsdr1.epa.gov/aqsweb/aqstmp/airdata/download_files.html#Daily
+
+Data Dictionary 
+http://aqsdr1.epa.gov/aqsweb/aqstmp/airdata/FileFormats.html#_format_4
+
+
+Loading air quality data of 1999 and 2016 
+
+```{r cars}
+airquality_1999 <- read.table("../daily_88101_1999.csv",sep=",",header = TRUE,stringsAsFactors = FALSE)
+airquality_2015 <- read.table("../daily_88101_2015.csv",sep=",",header = TRUE,stringsAsFactors = FALSE)
+```
+
+Rename Arthmetic.Mean to Pm2.5 variable 
+```{r}
+library("reshape")
+airquality_1999 <-rename(airquality_1999,c(Arithmetic.Mean="pm2.5"))
+airquality_2015 <-rename(airquality_2015,c(Arithmetic.Mean="pm2.5"))
+```
+
+Check statistics of the pm2.5 variable (micrograms/meter cube)
+```{r}
+summary(airquality_1999$pm2.5)
+summary(airquality_2015$pm2.5)
+```
+
+As we can see there is quite a change in this variable. Maximum value has relatively gone higher compared to 1999 and Mean has gone done. So, there seems to be a decrease in average mean of pm2.5 from 1999, which seems a good sign. However, there seems negative values in 2016, which is strange.
+
+Checking the dimensions
+```{r}
+dim(airquality_1999)
+dim(airquality_2015)
+```
+
+The number of recordings are more since there might have been an increase in number of testing facilities to check air quality since 1999.
+
+Lets compare the two years 
+```{r}
+boxplot(airquality_1999$pm2.5,airquality_2015$pm2.5)
+boxplot(log(airquality_1999$pm2.5),log(airquality_2015$pm2.5))
+```
+
+Now, lets check the negative values for 2015
+```{r}
+negative_2015 <- airquality_2015$pm2.5<0
+str(negative_2015)
+sum(negative_2015,na.rm=TRUE)
+mean(negative_2015)
+
+```
+
+So, there 3650 records less than 0 which is .9%, not that big.
+Check for negative values in 2015
+```{r}
+dates_2015 <-airquality_2015$Date.Local
+dates_2015<- as.Date(as.character(dates_2015),format="%Y-%m-%d")
+hist(dates_2015,"month")
+hist(dates_2015[negative_2015],"month")
+```
+
+Seems there are more negative values during june and july. May be measurement error, need to get domain expert help to see why negative values are tracked. For now, since the values are less thab 1% . We can move forward.
+
+```{r}
+attach(airquality_1999)
+sites_nyc_1999<-unique(subset(airquality_1999,State.Code=="36",select = c(County.Code,Site.Num)))
+detach(airquality_1999)
+attach(airquality_2015)
+sites_nyc_2015<-unique(subset(airquality_2015,State.Code=="36",select = c(County.Code,Site.Num)))
+detach(airquality_2015)
+
+sites_nyc_1999<-paste(sites_nyc_1999[,1],sites_nyc_1999[,2],sep=".")
+sites_nyc_2015<-paste(sites_nyc_2015[,1],sites_nyc_2015[,2],sep=".")
+```
+
+Check which monitors are same between 1999 and 2015
+Taking intersection
+```{r}
+both_mon<-intersect(sites_nyc_1999,sites_nyc_2015)
+```
+
+```{r}
+airquality_1999$County.Site<- with(airquality_1999,paste(airquality_1999$County.Code,airquality_1999$Site.Num,sep = "."))
+
+airquality_2015$County.Site<- with(airquality_2015,paste(airquality_2015$County.Code,airquality_2015$Site.Num,sep = "."))
+
+nyc_mon_cnt99 <-subset(airquality_1999,airquality_1999$State.Code=="36" & airquality_1999$County.Site %in% both_mon)
+
+nyc_mon_cnt15 <-subset(airquality_2015,airquality_2015$State.Code=="36" & airquality_2015$County.Site %in% both_mon)
+
+```
+
+Now lets check the number of observations captured on the same monitors between 2015 and 1999 in NYC
+
+```{r}
+dim(nyc_mon_cnt15)
+dim(nyc_mon_cnt99)
+
+```
+
+We can that in 2015 there are around 6 times observations captured.
+
+```{r}
+ sapply(split(nyc_mon_cnt15,nyc_mon_cnt15$County.Site),nrow)
+ sapply(split(nyc_mon_cnt99,nyc_mon_cnt99$County.Site),nrow)
+
+```
+
+Lets concentrate on a particular monitor for now
+```{r}
+mon99 <- subset(airquality_1999,airquality_1999$State.Code==36 & airquality_1999$County.Code==101 & airquality_1999$Site.Num==3)
+
+mon15 <- subset(airquality_2015,airquality_2015$State.Code==36 & airquality_2015$County.Code==101 & airquality_2015$Site.Num==3)
+
+dim(mon99)
+dim(mon15)
+```
+
+Plot the values for each year
+```{r}
+
+par(mfrow=c(1,2),mar=c(4,4,2,1),oma=c(0,0,2,0))
+
+plot(as.Date(as.character(mon15$Date.Local),format="%Y-%m-%d"),mon15$pm2.5,xlab = "Month",ylab = "Pm2.5 value",pch=20,col=4,main = "Pm2.5 2015")
+abline(h=median(mon15$pm2.5),col="red",lwd=3)
+
+plot(as.Date(as.character(mon99$Date.Local),format="%Y-%m-%d"),mon99$pm2.5,xlab = "Month",ylab = "Pm2.5 value",pch=20,col=4,main="Pm2.5 1999")
+abline(h=median(mon99$pm2.5),col="red",lwd=3)
+
+mtext("NYC County-101:Site-3 Comparison 1999 vs 2015",outer = TRUE)
+
+
+```
+
+Set the same range for both plots and then plot the points
+
+```{r}
+plot_range<- range(mon15$pm2.5,mon99$pm2.5)
+
+par(mfrow=c(1,2),mar=c(4,4,2,1),oma=c(0,0,2,0))
+plot(as.Date(as.character(mon15$Date.Local),format="%Y-%m-%d"),mon15$pm2.5,xlab = "Month",ylab = "Pm2.5 value",pch=20,col=4,ylim = plot_range)
+abline(h=median(mon15$pm2.5),col="red",lwd=3)
+title("Pm2.5 2015")
+
+plot(as.Date(as.character(mon99$Date.Local),format="%Y-%m-%d"),mon99$pm2.5,xlab = "Month",ylab = "Pm2.5 value",pch=20,col=4,ylim = plot_range)
+abline(h=median(mon99$pm2.5),col="red",lwd=3)
+title("Pm2.5 1999")
+
+mtext("NYC County-101:Site-3 Comparison 1999 vs 2015",outer = TRUE)
+
+```
+
+This shows average value has come down and also the spikes/high values has also come down
+
+```{r}
+mean99<- with(airquality_1999,tapply(airquality_1999$pm2.5, airquality_1999$State.Code, mean))
+
+str(mean99)
+summary(mean99)
+
+frame99<-data.frame(state=names(mean99),mean=mean99)
+
+```
+
+```{r echo=FALSE}
+
+mean15<- with(airquality_2015,tapply(airquality_2015$pm2.5, airquality_2015$State.Code, mean))
+
+str(mean15)
+summary(mean15)
+
+frame15<-data.frame(state=names(mean15),mean=mean15)
+
+
+```
+
+
+Merged data based on state
+```{r}
+
+merged_states <-merge(frame99,frame15,by="state")
+
+dim(merged_states)
+
+par(mfrow=c(1,1),mar=c(5,4,2,1))
+pm_range<-range(merged_states$mean.x,merged_states$mean.y)
+with(merged_states,plot(rep(1999,52),merged_states[,2],xlim = c(1998,2016),ylim = pm_range,xlab = "year",ylab="pm2.5",pch=20,col="blue"))
+with(merged_states,points(rep(2015,52),merged_states[,3],pch=20,col="red"))
+segments(rep(1999,52),merged_states[,2],rep(2015,52),merged_states[,3],col = "green",lwd=0.5)
+title(main="State wise comparison of PM2.5 between 1999 and 2015")
+
+
+```
+
