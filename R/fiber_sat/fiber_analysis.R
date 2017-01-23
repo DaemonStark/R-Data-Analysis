@@ -15,7 +15,7 @@ step(model_0,scope = list(lower=model_0,upper=model_1),direction = "forward")
 
   rows <- nrow(fiber);
 
-  model_original <- lm(X1 ~ X2 + X4);
+  model_original <- lm(X1 ~ X2 + X4,data = fiber_log);
   pairs(fiber)
 
   p <- length(model_original$coefficients);

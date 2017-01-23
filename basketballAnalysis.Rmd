@@ -1,0 +1,114 @@
+---
+title: "basketball"
+author: "Rash"
+date: "16 December 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+game_data = read.csv(file.choose(),header = T,sep = ",")
+
+summary(game_data)
+
+cor(game_data)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r}
+
+ game_q1 <- game_data[which(game_data$shot_x>0 & game_data$shot_y>0),]
+ game_q2 <- game_data[which(game_data$shot_x<0 & game_data$shot_y>0),]
+ game_q3 <- game_data[which(game_data$shot_x<0 & game_data$shot_y<0),]
+ game_q4 <- game_data[which(game_data$shot_x>0 & game_data$shot_y<0),]
+ 
+#scaled_q1 <- scale(game_q1, scale = TRUE,center = TRUE)
+#scaled_q2 <- scale(game_q2, scale = TRUE,center = TRUE)
+#scaled_q3 <- scale(game_q3, scale = TRUE,center = TRUE)
+#scaled_q4 <- scale(game_q4, scale = TRUE,center = TRUE)
+
+ scaled_q1 <- as.data.frame(cbind(factor(game_q1$made),scale(game_q1[,c(1,2,3,4,5,7,8,9,10)], scale = TRUE,center = TRUE)))
+ colnames(scaled_q1)[1]<- "made"
+ 
+  scaled_q2 <- as.data.frame(cbind(factor(game_q2$made),scale(game_q2[,c(1,2,3,4,5,7,8,9,10)], scale = TRUE,center = TRUE)))
+ colnames(scaled_q2)[1]<- "made"
+ 
+  scaled_q3 <- as.data.frame(cbind(factor(game_q3$made),scale(game_q3[,c(1,2,3,4,5,7,8,9,10)], scale = TRUE,center = TRUE)))
+ colnames(scaled_q3)[1]<- "made"
+ 
+  scaled_q4 <- as.data.frame(cbind(factor(game_q4$made),scale(game_q4[,c(1,2,3,4,5,7,8,9,10)], scale = TRUE,center = TRUE)))
+ colnames(scaled_q4)[1]<- "made"
+ 
+ 
+```
+
+```{r}
+
+library("caret")
+
+Train_q1 <- createDataPartition(scaled_q1$made,p=0.6,list = FALSE)
+trainData_q1 <-scaled_q1[Train_q1,]
+test_q1<-scaled_q1[-Train_q1,]
+
+Train_q2 <- createDataPartition(scaled_q2$made,p=0.6,list = FALSE)
+trainData_q2 <-scaled_q2[Train_q2,]
+test_q2<-scaled_q2[-Train_q2,]
+
+Train_q3 <- createDataPartition(scaled_q3$made,p=0.6,list = FALSE)
+trainData_q3 <-scaled_q3[Train_q3,]
+test_q3<-scaled_q3[-Train_q3,]
+
+Train_q4 <- createDataPartition(scaled_q4$made,p=0.6,list = FALSE)
+trainData_q4 <-scaled_q4[Train_q4,]
+test_q4<-scaled_q4[-Train_q4,]
+
+```
+
+
+```{r}
+
+mod_fit_q1 <- train(made~shot_x+shot_y+shooter_velocity_ft_sec+shooter_velocity_angle+dribbles_before+defender_distance+defender_angle+defender_velocity_ft_sec+defender_velocity_angle,  data=trainData_q1, method="glm", family="binomial")
+
+mod_fit_q2 <- train(made~shot_x+shot_y+shooter_velocity_ft_sec+shooter_velocity_angle+dribbles_before+defender_distance+defender_angle+defender_velocity_ft_sec+defender_velocity_angle,  data=trainData_q2, method="glm", family="binomial")
+
+mod_fit_q3 <- train(made~shot_x+shot_y+shooter_velocity_ft_sec+shooter_velocity_angle+dribbles_before+defender_distance+defender_angle+defender_velocity_ft_sec+defender_velocity_angle,  data=trainData_q3, method="glm", family="binomial")
+
+mod_fit_q4 <- train(made~shot_x+shot_y+shooter_velocity_ft_sec+shooter_velocity_angle+dribbles_before+defender_distance+defender_angle+defender_velocity_ft_sec+defender_velocity_angle,  data=trainData_q4, method="glm", family="binomial")
+
+```
+
+```{r}
+exp(coef(mod_fit_q1$finalModel))
+
+exp(coef(mod_fit_q2$finalModel))
+
+exp(coef(mod_fit_q3$finalModel))
+
+exp(coef(mod_fit_q4$finalModel))
+```
+
+```{r }
+
+model_q10 <- lm(scaled_q1$made~1)
+
+model_q11 <- lm(scaled_q1$made~scaled_q1$shot_x+scaled_q1$shot_y+scaled_q1$shooter_velocity_ft_sec+scaled_q1$shooter_velocity_angle+scaled_q1$dribbles_before+scaled_q1$defender_distance+scaled_q1$defender_angle+scaled_q1$defender_velocity_ft_sec+scaled_q1$defender_velocity_angle)
+
+q1.step<- step(model_q10,scope = list(lower=model_q10,upper=model_q11),direction = "both")
+
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r checking, echo=FALSE}
+library("MASS")
+boxcox(model_q11,lambda = seq(-.5,3,0.1),interp = TRUE)
+bc <- boxcox(q1.step,lambda = seq(-.5,3,0.1),interp = TRUE)
+#bc$x[which.max(bc$y)]
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

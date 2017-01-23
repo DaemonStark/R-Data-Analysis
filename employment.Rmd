@@ -33,6 +33,7 @@ This Analysis shows that with Forward selection process. Model with X2, X3, X4, 
 
 # Remove X5 from data set and analyse
 
+
 ```{r}
 longley <-longley[,-5]
 ```
