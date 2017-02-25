@@ -1,0 +1,261 @@
+---
+title: "AshvilleMaps"
+author: "Rash"
+date: "19 February 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r}
+install.packages(ggmap)
+
+library(ggplot2)
+library(ggmap)
+```
+
+
+```{r}
+ash_data <- read.csv(file.choose(),header = T, sep = ",")
+```
+
+
+#
+get_map(location = c(lon = -95.3632715, lat = 29.7632836), zoom = "auto", scale = "auto", maptype = c("terrain", "terrain-background", "satellite", "roadmap", "hybrid", "toner", "watercolor", "terrain-labels", "terrain-lines", "toner-2010", "toner-2011", "toner-background", "toner-hybrid", "toner-labels", "toner-lines", "toner-lite"), source = c("google", "osm", "stamen", "cloudmade"), force = ifelse(source == "google", TRUE, TRUE), messaging = FALSE, urlonly = FALSE, filename = "ggmapTemp", crop = TRUE, color = c("color", "bw"), language = "en-EN", api_key)
+
+
+
+```{r}
+mapgilbert <- get_map(location = c(lon = mean(ash_data$longitude), lat = mean(ash_data$latitude)), zoom = "auto" ,maptype = "roadmap", source="google",scale = "auto")
+
+ggmap(mapgilbert) +
++     geom_point(data = df, aes(x = ash_data$longitude, y = ash_data$latitude, fill = "red", alpha = 0.8), size = 5, shape = 21) +
++     guides(fill=FALSE, alpha=FALSE, size=FALSE)
+
+```
+
+```{r}
+
+review <- read.csv(file.choose(),header = T,sep = ",")
+library(plyr)
+
+merged_reviews <- ddply(review,.(listing_id),
+      summarise,
+      reviews = paste(unique(review$comments),collapse = ' '))
+
+
+```
+
+```{r}
+
+dictionary <- read.csv(file.choose(),header = F,sep = "\t")
+keys <- dictionary$V1
+values <- dictionary$V2
+dictionary <- setNames(as.list(values),keys)
+
+
+
+```
+
+```{r}
+review_comments <- read.csv(file.choose(),header = T,sep = ",")
+
+getScore <- function(text)
+{
+ words <- strsplit(text," ");
+ 
+ if(length(words)>0)
+ {
+ words <- unique(words)
+ 
+ score <- 0
+ 
+  for(i in 1:length(words))
+  {
+    for(j in 1:length(words[[i]])) 
+    {
+      word <- words[[i]][j]
+      
+      word <- tolower(word)
+    
+      if (dictionary[word]=="NULL" || length(word)<1)
+      { 
+        score = score + 0
+      
+      } else 
+      {
+       score <- score + as.double(dictionary[word])   
+      }
+    }
+  
+  }
+ return(score)
+ }else
+ {
+   return(0)
+ }
+ 
+}
+ 
+ 
+```
+
+```{r}
+
+sentiments <- list()
+
+for (i in 1:nrow(review_comments))
+{
+  data <- toString(review_comments[i,2])
+  
+  sentiment <- lapply(data,getScore)
+  
+  sentiments <- rbind(sentiments,sentiment)
+  
+  
+}
+
+
+
+
+
+```
+
+```{r}
+
+review_comments <- cbind(review_comments,sentiments)
+
+names(review_comments) <- c("listing_id","Comments","Sentiment_Score")
+
+review_comments$Sentiments <- as.integer(review_comments$Sentiments)
+
+mean(review_comments$Sentiments)
+
+group_mean <- aggregate(review_comments$Sentiment_Score,list(review_comments$listing_id),mean)
+
+write.csv(group_mean,"review_grouped_sentiments.csv")
+ 
+
+```
+
+```{r}
+
+hist(group$x,col="green",main="Review Sentiment Score",xlab = "Sentiment Score")
+abline(v=median(group$x),col="magenta",lwd=4)
+abline(v=8,lwd=3)
+
+abline(v=median(group$x),col="magenta",lwd=4)
+legend("topright", inset=.05,
+       c("Mean","CutOff"), fill=c("magenta","black"), horiz=TRUE)
+
+```
+
+
+```{r}
+
+ hosts <- read.csv(file.choose(),header = T,sep = ",",stringsAsFactors = FALSE)
+
+hosts$host_since_frm <- as.Date(hosts$host_since,format = "%d-%m-%Y")
+
+hosts$days_since <- (Sys.Date()-hosts$host_since_frm)
+
+hosts$email <- 1
+hosts$social <- 1
+hosts$phone <- 1
+hosts$reviews <- 1
+
+if(length(as.double(grep('facebook',hosts$host_verifications[1])))>0){print(1)} else{print(0)}
+
+
+checkVerify <- function(column)
+{
+  for (i in 1:nrow(hosts))
+  { flag <- 0
+          
+    if(length(as.double(grep(column,hosts$host_verifications[i])))>0)
+      {flag <- 1} 
+    
+    hosts[column][i,] <- flag
+    
+  }
+}
+
+
+```
+
+
+```{r}
+
+for (i in 1:nrow(hosts))
+  { flag <- 0
+          
+    if(length(as.double(grep("facebook",hosts$host_verifications[i])))>0 ||length(as.double(grep("google",hosts$host_verifications[i])))>0 ||length(as.double(grep("jumio",hosts$host_verifications[i])))>0 ||length(as.double(grep("kba",hosts$host_verifications[i])))>0)
+      {flag <- 1} 
+    
+    hosts[column][i,] <- flag
+    
+  }
+
+
+hosts$verification_score <- (hosts$email + hosts$social +hosts$phone +hosts$reviews)
+
+
+```
+
+
+```{r}
+
+for (i in 1:nrow(hosts))
+  { flag <- 0
+   
+  if(toString(hosts$host_response_time[i])=="within a few hours")
+  {
+    flag <- 2
+  }else if (toString(hosts$host_response_time[i])=="within an hour")
+  {
+      flag <- 1
+  }else if (toString(hosts$host_response_time[i])=="within a day")
+  {
+    flag <- 3
+  }else if (toString(hosts$host_response_time[i])=="a few days or more")
+  {
+    flag <- 4
+  }
+    
+    hosts["response_rate"][i,] <- flag
+    
+  }
+
+```
+
+
+```{r}
+hosts$price <- as.numeric(hosts$price)
+model_1 <- lm(hosts$price~1)
+
+
+scaled_v_score <- scale(hosts$verification_score)
+scaled_res_rate <- scale(hosts$response_rate)
+scaled_days <- scale(hosts$days_since)
+price <- hosts$price
+
+
+ 
+
+```
+
+```{r}
+
+scaled_v_score <- scale(hosts$verification_score)
+scaled_res_rate <- scale(hosts$response_rate)
+scaled_days <- scale(hosts$days_since)
+price <- price[price<50]
+
+
+
+```
+
